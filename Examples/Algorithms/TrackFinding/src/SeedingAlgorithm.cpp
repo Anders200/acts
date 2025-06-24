@@ -196,6 +196,19 @@ ProcessCode SeedingAlgorithm::execute(const AlgorithmContext& ctx) const {
     nSpacePoints += (*isp)(ctx).size();
   }
 
+
+  // switch (hardcoded for now)
+  const int SPACE_POINT_NUMBER_SWITCH = 10;
+  const float REGION_DELTA_DEFAULT = 150;
+  if (nSpacePoints >= SPACE_POINT_NUMBER_SWITCH) {
+    m_seedFinder.setCustomcCollisionRegion(-0.5, 0.5); 
+  } else {
+    m_seedFinder.setCustomcCollisionRegion(-REGION_DELTA_DEFAULT, REGION_DELTA_DEFAULT); 
+  
+
+  }
+
+
   std::vector<const SimSpacePoint*> spacePointPtrs;
   spacePointPtrs.reserve(nSpacePoints);
   for (const auto& isp : m_inputSpacePoints) {
