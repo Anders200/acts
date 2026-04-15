@@ -19,6 +19,7 @@
 #include "ActsExamples/Framework/DataHandle.hpp"
 #include "ActsExamples/Framework/IAlgorithm.hpp"
 #include "ActsExamples/Framework/ProcessCode.hpp"
+#include "Acts/Vertexing/Vertex.hpp"
 
 #include <memory>
 #include <string>
@@ -42,6 +43,11 @@ class GridTripletSeedingAlgorithm final : public IAlgorithm {
     float bFieldInZ = 2 * Acts::UnitConstants::T;
     /// minimum pT
     float minPt = 0.4 * Acts::UnitConstants::GeV;
+
+    // Hough-vertex filtering (optional)
+    std::string fittedHoughVertices = "";
+    float tolerance = 1 * Acts::UnitConstants::mm;
+
     /// maximum forward direction expressed as cot(theta)
     float cotThetaMax = 10.01788;  // equivalent to eta = 3 (pseudorapidity)
     /// maximum impact parameter in mm
@@ -258,6 +264,9 @@ class GridTripletSeedingAlgorithm final : public IAlgorithm {
                                                             "InputSpacePoints"};
 
   WriteDataHandle<SimSeedContainer> m_outputSeeds{this, "OutputSeeds"};
+
+
+  ReadDataHandle<std::vector<Acts::Vertex>> m_inputVertex{this, "fittedHoughVertices"};
 
   /// Get the proper radius validity range given a middle space point candidate.
   /// In case the radius range changes according to the z-bin we need to

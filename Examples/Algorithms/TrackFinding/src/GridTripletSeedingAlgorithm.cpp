@@ -32,6 +32,11 @@ GridTripletSeedingAlgorithm::GridTripletSeedingAlgorithm(
   m_inputSpacePoints.initialize(m_cfg.inputSpacePoints);
   m_outputSeeds.initialize(m_cfg.outputSeeds);
 
+//  if (!m_cfg.fittedHoughVertices.empty()) {
+  m_cfg.fittedHoughVertices = "fittedHoughVertices";
+  m_inputVertex.initialize(m_cfg.fittedHoughVertices);
+  //}
+
   // check that the bins required in the custom bin looping
   // are contained in the bins defined by the total number of edges
   for (std::size_t i : m_cfg.zBinsCustomLooping) {
@@ -135,6 +140,22 @@ ProcessCode GridTripletSeedingAlgorithm::execute(
   Acts::Experimental::BroadTripletSeedFinder::Options finderOptions;
   finderOptions.bFieldInZ = m_cfg.bFieldInZ;
 
+  bool applySeedFiltering = false;
+  float z_position = 0.0f;
+
+
+  if (!m_cfg.fittedHoughVertices.empty()) {
+    auto houghVertices = m_inputVertex(ctx);
+    if (houghVertices.empty()) {
+      ACTS_INFO("No fitted Hough vertices found in event; skipping seed filtering");
+    } else {
+      z_position = houghVertices.at(0).position()[2];
+      applySeedFiltering = true;
+      
+    }
+  }
+
+
   Acts::Experimental::DoubletSeedFinder::Config bottomDoubletFinderConfig;
   bottomDoubletFinderConfig.candidateDirection = Acts::Direction::Backward();
   bottomDoubletFinderConfig.deltaRMin = std::isnan(m_cfg.deltaRMaxBottom)
@@ -149,6 +170,16 @@ ProcessCode GridTripletSeedingAlgorithm::execute(
   bottomDoubletFinderConfig.interactionPointCut = m_cfg.interactionPointCut;
   bottomDoubletFinderConfig.collisionRegionMin = m_cfg.collisionRegionMin;
   bottomDoubletFinderConfig.collisionRegionMax = m_cfg.collisionRegionMax;
+
+  if (applySeedFiltering) {
+    ACTS_INFO("Applying seed filtering with z-position " << z_position
+                                                        << " and tolerance "
+                                                        << m_cfg.tolerance);
+    bottomDoubletFinderConfig.collisionRegionMin = z_position - m_cfg.tolerance;
+    bottomDoubletFinderConfig.collisionRegionMax = z_position + m_cfg.tolerance;
+  }
+
+  
   bottomDoubletFinderConfig.cotThetaMax = m_cfg.cotThetaMax;
   bottomDoubletFinderConfig.minPt = m_cfg.minPt;
   bottomDoubletFinderConfig.helixCutTolerance = m_cfg.helixCutTolerance;
