@@ -65,6 +65,9 @@ GridTripletSeedingAlgorithm::GridTripletSeedingAlgorithm(
     : IAlgorithm("GridTripletSeedingAlgorithm", std::move(logger)), m_cfg(cfg) {
   m_inputSpacePoints.initialize(m_cfg.inputSpacePoints);
   m_outputSeeds.initialize(m_cfg.outputSeeds);
+  if (!m_cfg.inputVertices.empty()) {
+    m_inputVertices.initialize(m_cfg.inputVertices);
+  }
 
   // check that the bins required in the custom bin looping
   // are contained in the bins defined by the total number of edges
@@ -197,6 +200,28 @@ ProcessCode GridTripletSeedingAlgorithm::execute(
     return {minRange, maxRange};
   }();
 
+  float collisionRegionMin = m_cfg.collisionRegionMin;
+  float collisionRegionMax = m_cfg.collisionRegionMax;
+  if (!m_cfg.inputVertices.empty()) {
+    const VertexContainer& vertices = m_inputVertices(ctx);
+    if (!vertices.empty()) {
+      const Acts::Vector3 vtx = vertices.front().position();
+      collisionRegionMin =
+          static_cast<float>(vtx.z()) -
+          m_cfg.houghFilterTolerance;
+      collisionRegionMax =
+          static_cast<float>(vtx.z()) +
+          m_cfg.houghFilterTolerance;
+      ACTS_DEBUG("Hough vertex at z=" << vtx.z()
+                 << " mm → collision region ["
+                 << collisionRegionMin << ", " << collisionRegionMax << "] mm");
+    } else {
+      ACTS_DEBUG(
+          "Hough vertex collection is empty, using default collision region");
+    }
+  }
+
+
   Acts::DoubletSeedFinder::Config bottomDoubletFinderConfig;
   bottomDoubletFinderConfig.spacePointsSortedByRadius = true;
   bottomDoubletFinderConfig.candidateDirection = Acts::Direction::Backward();
@@ -210,8 +235,8 @@ ProcessCode GridTripletSeedingAlgorithm::execute(
   bottomDoubletFinderConfig.deltaZMax = m_cfg.deltaZMax;
   bottomDoubletFinderConfig.impactMax = m_cfg.impactMax;
   bottomDoubletFinderConfig.interactionPointCut = m_cfg.interactionPointCut;
-  bottomDoubletFinderConfig.collisionRegionMin = m_cfg.collisionRegionMin;
-  bottomDoubletFinderConfig.collisionRegionMax = m_cfg.collisionRegionMax;
+  bottomDoubletFinderConfig.collisionRegionMin = collisionRegionMin;
+  bottomDoubletFinderConfig.collisionRegionMax = collisionRegionMax; 
   bottomDoubletFinderConfig.cotThetaMax = m_cfg.cotThetaMax;
   bottomDoubletFinderConfig.minPt = m_cfg.minPt;
   bottomDoubletFinderConfig.helixCutTolerance = m_cfg.helixCutTolerance;

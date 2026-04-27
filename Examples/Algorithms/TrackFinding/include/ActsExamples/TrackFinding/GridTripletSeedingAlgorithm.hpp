@@ -19,6 +19,7 @@
 #include "ActsExamples/Framework/DataHandle.hpp"
 #include "ActsExamples/Framework/IAlgorithm.hpp"
 #include "ActsExamples/Framework/ProcessCode.hpp"
+#include "ActsExamples/EventData/Vertex.hpp"
 
 #include <memory>
 #include <string>
@@ -35,6 +36,13 @@ class GridTripletSeedingAlgorithm final : public IAlgorithm {
     std::string inputSpacePoints;
     /// Output track seed collection.
     std::string outputSeeds;
+
+
+    /// Optional input vertices collection (e.g. from HoughVertexFinder)
+    /// If empty, no vertex constraint is applied to the seeder
+    std::string inputVertices;
+    float houghFilterTolerance = 10 * Acts::UnitConstants::mm;
+
 
     // General seeding parameters
 
@@ -260,6 +268,7 @@ class GridTripletSeedingAlgorithm final : public IAlgorithm {
 
   ReadDataHandle<SpacePointContainer> m_inputSpacePoints{this,
                                                          "InputSpacePoints"};
+  ReadDataHandle<VertexContainer> m_inputVertices{this, "InputVertices"};                                                         
   WriteDataHandle<SeedContainer> m_outputSeeds{this, "OutputSeeds"};
 
   /// Get the proper radius validity range given a middle space point candidate.
