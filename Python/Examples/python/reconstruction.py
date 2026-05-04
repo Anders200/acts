@@ -121,8 +121,10 @@ SeedingAlgorithmConfigArg = namedtuple(
         "zBinNeighborsBottom",
         "numPhiNeighbors",
         "useExtraCuts",
+        "tolerance",
+        "fittedHoughVertices"
     ],
-    defaults=[None] * 5,
+    defaults=[None] * 7,
 )
 
 TruthEstimatedSeedingAlgorithmConfigArg = namedtuple(
@@ -306,6 +308,7 @@ def addSeeding(
     spacePointGridConfigArg: SpacePointGridConfigArg = SpacePointGridConfigArg(),
     seedingAlgorithmConfigArg: SeedingAlgorithmConfigArg = SeedingAlgorithmConfigArg(),
     houghTransformConfig: acts.examples.HoughTransformSeeder.Config = acts.examples.HoughTransformSeeder.Config(),
+    houghVertexName: str = "",
     adaptiveHoughTransformConfig: Optional[
         acts.examples.AdaptiveHoughTransformSeeder.Config
     ] = None,
@@ -358,7 +361,7 @@ def addSeeding(
     spacePointGridConfigArg : SpacePointGridConfigArg(rMax, zBinEdges, phiBinDeflectionCoverage, phi, maxPhiBins, impactMax)
                                 SpacePointGridConfigArg settings. phi is specified as a tuple of (min,max).
         Defaults specified in Core/include/Acts/Seeding/SpacePointGrid.hpp
-    seedingAlgorithmConfigArg : SeedingAlgorithmConfigArg(allowSeparateRMax, zBinNeighborsTop, zBinNeighborsBottom, numPhiNeighbors, useExtraCuts)
+    seedingAlgorithmConfigArg : SeedingAlgorithmConfigArg(allowSeparateRMax, zBinNeighborsTop, zBinNeighborsBottom, numPhiNeighbors, useExtraCuts, tolerance, fittedHoughVertices)
                                 Defaults specified in Examples/Algorithms/TrackFinding/include/ActsExamples/TrackFinding/SeedingAlgorithm.hpp
     hashingTrainingConfigArg : HashingTrainingConfigArg(annoySeed, f)
                                 Defaults specified in Examples/Algorithms/TrackFinding/include/ActsExamples/TrackFinding/HashingPrototypeSeedingAlgorithm.hpp
@@ -474,6 +477,7 @@ def addSeeding(
             )
         elif seedingAlgorithm == SeedingAlgorithm.GridTriplet:
             logger.info("Using grid triplet seeding")
+
             seeds = addGridTripletSeeding(
                 s,
                 spacePoints,
@@ -891,70 +895,77 @@ def addGridTripletSeeding(
             minPt=seedFinderConfigArg.minPt,
             cotThetaMax=seedFinderConfigArg.cotThetaMax,
             impactMax=seedFinderConfigArg.impactMax,
-            deltaRMin=seedFinderConfigArg.deltaR[0],
-            deltaRMax=seedFinderConfigArg.deltaR[1],
-            deltaRMinTop=(
-                seedFinderConfigArg.deltaR[0]
-                if seedFinderConfigArg.deltaRTopSP[0] is None
-                else seedFinderConfigArg.deltaRTopSP[0]
-            ),
-            deltaRMaxTop=(
-                seedFinderConfigArg.deltaR[1]
-                if seedFinderConfigArg.deltaRTopSP[1] is None
-                else seedFinderConfigArg.deltaRTopSP[1]
-            ),
-            deltaRMinBottom=(
-                seedFinderConfigArg.deltaR[0]
-                if seedFinderConfigArg.deltaRBottomSP[0] is None
-                else seedFinderConfigArg.deltaRBottomSP[0]
-            ),
-            deltaRMaxBottom=(
-                seedFinderConfigArg.deltaR[1]
-                if seedFinderConfigArg.deltaRBottomSP[1] is None
-                else seedFinderConfigArg.deltaRBottomSP[1]
-            ),
-            rMin=seedFinderConfigArg.r[0],
-            rMax=seedFinderConfigArg.r[1],
-            zMin=seedFinderConfigArg.z[0],
-            zMax=seedFinderConfigArg.z[1],
-            phiMin=spacePointGridConfigArg.phi[0],
-            phiMax=spacePointGridConfigArg.phi[1],
-            phiBinDeflectionCoverage=spacePointGridConfigArg.phiBinDeflectionCoverage,
-            maxPhiBins=spacePointGridConfigArg.maxPhiBins,
-            zBinEdges=spacePointGridConfigArg.zBinEdges,
-            zBinsCustomLooping=seedFinderConfigArg.zBinsCustomLooping,
-            rMinMiddle=None,
-            rMaxMiddle=None,
-            useVariableMiddleSPRange=seedFinderConfigArg.useVariableMiddleSPRange,
-            rRangeMiddleSP=seedFinderConfigArg.rRangeMiddleSP,
-            deltaRMiddleMinSPRange=seedFinderConfigArg.deltaRMiddleSPRange[0],
-            deltaRMiddleMaxSPRange=seedFinderConfigArg.deltaRMiddleSPRange[1],
-            deltaZMin=None,
-            deltaZMax=None,
-            interactionPointCut=seedFinderConfigArg.interactionPointCut,
-            collisionRegionMin=seedFinderConfigArg.collisionRegion[0],
-            collisionRegionMax=seedFinderConfigArg.collisionRegion[1],
-            helixCutTolerance=None,
-            sigmaScattering=seedFinderConfigArg.sigmaScattering,
-            radLengthPerSeed=seedFinderConfigArg.radLengthPerSeed,
-            toleranceParam=None,
-            deltaInvHelixDiameter=None,
-            compatSeedWeight=seedFilterConfigArg.compatSeedWeight,
-            impactWeightFactor=seedFilterConfigArg.impactWeightFactor,
-            zOriginWeightFactor=seedFilterConfigArg.zOriginWeightFactor,
-            maxSeedsPerSpM=seedFinderConfigArg.maxSeedsPerSpM,
-            compatSeedLimit=seedFilterConfigArg.compatSeedLimit,
-            seedWeightIncrement=seedFilterConfigArg.seedWeightIncrement,
-            numSeedIncrement=seedFilterConfigArg.numSeedIncrement,
-            seedConfirmation=seedFinderConfigArg.seedConfirmation,
-            centralSeedConfirmationRange=seedFinderConfigArg.centralSeedConfirmationRange,
-            forwardSeedConfirmationRange=seedFinderConfigArg.forwardSeedConfirmationRange,
-            maxSeedsPerSpMConf=seedFilterConfigArg.maxSeedsPerSpMConf,
-            maxQualitySeedsPerSpMConf=seedFilterConfigArg.maxQualitySeedsPerSpMConf,
-            useDeltaRinsteadOfTopRadius=seedFilterConfigArg.useDeltaRorTopRadius,
-            useExtraCuts=seedingAlgorithmConfigArg.useExtraCuts,
+        deltaRMin=seedFinderConfigArg.deltaR[0],
+        deltaRMax=seedFinderConfigArg.deltaR[1],
+        deltaRMinTop=(
+            seedFinderConfigArg.deltaR[0]
+            if seedFinderConfigArg.deltaRTopSP[0] is None
+            else seedFinderConfigArg.deltaRTopSP[0]
+        ),
+        deltaRMaxTop=(
+            seedFinderConfigArg.deltaR[1]
+            if seedFinderConfigArg.deltaRTopSP[1] is None
+            else seedFinderConfigArg.deltaRTopSP[1]
+        ),
+        deltaRMinBottom=(
+            seedFinderConfigArg.deltaR[0]
+            if seedFinderConfigArg.deltaRBottomSP[0] is None
+            else seedFinderConfigArg.deltaRBottomSP[0]
+        ),
+        deltaRMaxBottom=(
+            seedFinderConfigArg.deltaR[1]
+            if seedFinderConfigArg.deltaRBottomSP[1] is None
+            else seedFinderConfigArg.deltaRBottomSP[1]
+        ),
+        rMin=seedFinderConfigArg.r[0],
+        rMax=seedFinderConfigArg.r[1],
+        zMin=seedFinderConfigArg.z[0],
+        zMax=seedFinderConfigArg.z[1],
+        phiMin=spacePointGridConfigArg.phi[0],
+        phiMax=spacePointGridConfigArg.phi[1],
+        phiBinDeflectionCoverage=spacePointGridConfigArg.phiBinDeflectionCoverage,
+        maxPhiBins=spacePointGridConfigArg.maxPhiBins,
+        zBinEdges=spacePointGridConfigArg.zBinEdges,
+        zBinsCustomLooping=seedFinderConfigArg.zBinsCustomLooping,
+        rMinMiddle=None,
+        rMaxMiddle=None,
+        useVariableMiddleSPRange=seedFinderConfigArg.useVariableMiddleSPRange,
+        rRangeMiddleSP=seedFinderConfigArg.rRangeMiddleSP,
+        deltaRMiddleMinSPRange=seedFinderConfigArg.deltaRMiddleSPRange[0],
+        deltaRMiddleMaxSPRange=seedFinderConfigArg.deltaRMiddleSPRange[1],
+        deltaZMin=None,
+        deltaZMax=None,
+        interactionPointCut=seedFinderConfigArg.interactionPointCut,
+        collisionRegionMin=seedFinderConfigArg.collisionRegion[0],
+        collisionRegionMax=seedFinderConfigArg.collisionRegion[1],
+        helixCutTolerance=None,
+        sigmaScattering=seedFinderConfigArg.sigmaScattering,
+        radLengthPerSeed=seedFinderConfigArg.radLengthPerSeed,
+        toleranceParam=None,
+        deltaInvHelixDiameter=None,
+        compatSeedWeight=seedFilterConfigArg.compatSeedWeight,
+        impactWeightFactor=seedFilterConfigArg.impactWeightFactor,
+        zOriginWeightFactor=seedFilterConfigArg.zOriginWeightFactor,
+        maxSeedsPerSpM=seedFinderConfigArg.maxSeedsPerSpM,
+        compatSeedLimit=seedFilterConfigArg.compatSeedLimit,
+        seedWeightIncrement=seedFilterConfigArg.seedWeightIncrement,
+        numSeedIncrement=seedFilterConfigArg.numSeedIncrement,
+        seedConfirmation=seedFinderConfigArg.seedConfirmation,
+        centralSeedConfirmationRange=seedFinderConfigArg.centralSeedConfirmationRange,
+        forwardSeedConfirmationRange=seedFinderConfigArg.forwardSeedConfirmationRange,
+        maxSeedsPerSpMConf=seedFilterConfigArg.maxSeedsPerSpMConf,
+        maxQualitySeedsPerSpMConf=seedFilterConfigArg.maxQualitySeedsPerSpMConf,
+        useDeltaRinsteadOfTopRadius=seedFilterConfigArg.useDeltaRorTopRadius,
+        useExtraCuts=seedingAlgorithmConfigArg.useExtraCuts,
         ),
     )
+    
+    # Set vertex and tolerance configuration on the algorithm config
+    if seedingAlgorithmConfigArg.fittedHoughVertices:
+        seedingAlg.config.fittedHoughVertices = seedingAlgorithmConfigArg.fittedHoughVertices
+    if seedingAlgorithmConfigArg.tolerance is not None:
+        seedingAlg.config.tolerance = seedingAlgorithmConfigArg.tolerance
+    
     sequence.addAlgorithm(seedingAlg)
 
     return seedingAlg.config.outputSeeds
@@ -2472,11 +2483,9 @@ def addHoughVertexFinding(
     logLevel: Optional[acts.logging.Level] = None,
     inputSpacePoints: Optional[str] = "spacepoints",
     outputVertices: Optional[str] = "fittedHoughVertices",
+    tolerance: Optional[float] = None,
 ) -> None:
-    from acts.examples import (
-        HoughVertexFinderAlgorithm,
-        RootVertexNTupleWriter,
-    )
+    from acts.examples import HoughVertexFinderAlgorithm
 
     customLogLevel = acts.examples.defaultLogging(s, logLevel)
 
@@ -2495,6 +2504,8 @@ def addHoughVertexFinding(
         assert (
             ACTS_EXAMPLES_ROOT_AVAILABLE
         ), "ROOT output requested but ROOT is not available"
+        from acts.examples.root import RootVertexNTupleWriter
+
         outputDirRoot = Path(outputDirRoot)
         if not outputDirRoot.exists():
             outputDirRoot.mkdir()

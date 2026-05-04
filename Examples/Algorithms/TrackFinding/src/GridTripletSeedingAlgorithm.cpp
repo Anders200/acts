@@ -65,8 +65,12 @@ GridTripletSeedingAlgorithm::GridTripletSeedingAlgorithm(
     : IAlgorithm("GridTripletSeedingAlgorithm", std::move(logger)), m_cfg(cfg) {
   m_inputSpacePoints.initialize(m_cfg.inputSpacePoints);
   m_outputSeeds.initialize(m_cfg.outputSeeds);
-  if (!m_cfg.inputVertices.empty()) {
-    m_inputVertices.initialize(m_cfg.inputVertices);
+
+  std::cout << "GridTripletSeedingAlgorithm config:" << std::endl;
+  std::cout << "fittedHoughVertices: " << m_cfg.fittedHoughVertices << std::endl;
+
+  if (!m_cfg.fittedHoughVertices.empty()) {
+    m_inputVertex.maybeInitialize(m_cfg.fittedHoughVertices);
   }
 
   // check that the bins required in the custom bin looping
@@ -202,25 +206,29 @@ ProcessCode GridTripletSeedingAlgorithm::execute(
 
   float collisionRegionMin = m_cfg.collisionRegionMin;
   float collisionRegionMax = m_cfg.collisionRegionMax;
-  if (!m_cfg.inputVertices.empty()) {
-    const VertexContainer& vertices = m_inputVertices(ctx);
+
+  //debug
+  ACTS_INFO("tolerance: " << m_cfg.tolerance);
+
+  
+  ACTS_INFO("fittedHoughVertices: " << m_cfg.fittedHoughVertices);
+
+
+  if (!m_cfg.fittedHoughVertices.empty() && m_inputVertex.isInitialized()) {
+    const VertexContainer& vertices = m_inputVertex(ctx);
     if (!vertices.empty()) {
       const Acts::Vector3 vtx = vertices.front().position();
-      collisionRegionMin =
-          static_cast<float>(vtx.z()) -
-          m_cfg.houghFilterTolerance;
-      collisionRegionMax =
-          static_cast<float>(vtx.z()) +
-          m_cfg.houghFilterTolerance;
-      ACTS_DEBUG("Hough vertex at z=" << vtx.z()
-                 << " mm → collision region ["
+      collisionRegionMin = static_cast<float>(vtx.z()) - m_cfg.tolerance;
+      collisionRegionMax = static_cast<float>(vtx.z()) + m_cfg.tolerance;
+      ACTS_INFO("Hough vertex at z=" << vtx.z() << " mm → collision region ["
                  << collisionRegionMin << ", " << collisionRegionMax << "] mm");
     } else {
-      ACTS_DEBUG(
+      ACTS_INFO(
           "Hough vertex collection is empty, using default collision region");
     }
+  } else {
+    ACTS_INFO("No fitted Hough vertices provided, using default collision region");
   }
-
 
   Acts::DoubletSeedFinder::Config bottomDoubletFinderConfig;
   bottomDoubletFinderConfig.spacePointsSortedByRadius = true;

@@ -54,7 +54,8 @@ void addTrackFinding(py::module& mex) {
       zOriginWeightFactor, maxSeedsPerSpM, compatSeedLimit, seedWeightIncrement,
       numSeedIncrement, seedConfirmation, centralSeedConfirmationRange,
       forwardSeedConfirmationRange, maxSeedsPerSpMConf,
-      maxQualitySeedsPerSpMConf, useDeltaRinsteadOfTopRadius, useExtraCuts);
+      maxQualitySeedsPerSpMConf, useDeltaRinsteadOfTopRadius, useExtraCuts,
+      tolerance, fittedHoughVertices);
 
   ACTS_PYTHON_DECLARE_ALGORITHM(
       OrthogonalTripletSeedingAlgorithm, mex,
