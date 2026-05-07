@@ -268,8 +268,7 @@ class GridTripletSeedingAlgorithm final : public IAlgorithm {
 
   ReadDataHandle<SpacePointContainer> m_inputSpacePoints{this,
                                                          "InputSpacePoints"};
-  ReadDataHandle<std::vector<Acts::Vertex>> m_inputVertex{
-      this, "fittedHoughVertices"};
+  ReadDataHandle<VertexContainer> m_inputVertex{this, "fittedHoughVertices"};
                                                       
   WriteDataHandle<SeedContainer> m_outputSeeds{this, "OutputSeeds"};
 

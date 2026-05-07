@@ -70,7 +70,7 @@ GridTripletSeedingAlgorithm::GridTripletSeedingAlgorithm(
   std::cout << "fittedHoughVertices: " << m_cfg.fittedHoughVertices << std::endl;
 
   if (!m_cfg.fittedHoughVertices.empty()) {
-    m_inputVertex.maybeInitialize(m_cfg.fittedHoughVertices);
+    m_inputVertex.initialize(m_cfg.fittedHoughVertices);
   }
 
   // check that the bins required in the custom bin looping
@@ -212,6 +212,9 @@ ProcessCode GridTripletSeedingAlgorithm::execute(
 
   
   ACTS_INFO("fittedHoughVertices: " << m_cfg.fittedHoughVertices);
+
+  ACTS_INFO("!m_cfg.fittedHoughVertices.empty(): " << !m_cfg.fittedHoughVertices.empty());
+  ACTS_INFO("m_inputVertex.isInitialized(): " << m_inputVertex.isInitialized());
 
 
   if (!m_cfg.fittedHoughVertices.empty() && m_inputVertex.isInitialized()) {
