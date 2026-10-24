@@ -241,6 +241,40 @@ ProcessCode TruthJetAlgorithm::execute(const AlgorithmContext& ctx) const {
     return maxHadronLabel;
   };  // jet classification
 
+  // Truth primary vertex positions, taken from particles produced directly at
+  // the primary vertex (no secondary vertex)
+  boost::container::flat_map<SimBarcode::PrimaryVertexId, Acts::Vector4>
+      primaryVertices;
+  for (const auto* particle : truthParticles) {
+    const auto& barcode = particle->particleId();
+    if (barcode.vertexSecondary() == 0) {
+      primaryVertices.try_emplace(barcode.vertexPrimary(),
+                                  particle->fourPosition());
+    }
+  }
+
+  // The jet truth vertex is the primary vertex most of its constituents
+  // come from
+  auto findJetTruthVertex = [&](const std::vector<int>& constituentIndices)
+      -> std::optional<Acts::Vector4> {
+    boost::container::flat_map<SimBarcode::PrimaryVertexId, std::size_t>
+        vertexCounts;
+    for (int index : constituentIndices) {
+      vertexCounts[truthParticles.at(index)->particleId().vertexPrimary()] +=
+          1;
+    }
+    auto maxIt = std::ranges::max_element(
+        vertexCounts, {}, [](const auto& entry) { return entry.second; });
+    if (maxIt == vertexCounts.end()) {
+      return std::nullopt;
+    }
+    auto vertexIt = primaryVertices.find(maxIt->first);
+    if (vertexIt == primaryVertices.end()) {
+      return std::nullopt;
+    }
+    return vertexIt->second;
+  };
+
   boost::container::flat_map<ActsExamples::JetLabel, std::size_t>
       jetLabelCounts;
 
@@ -273,6 +307,9 @@ ProcessCode TruthJetAlgorithm::execute(const AlgorithmContext& ctx) const {
       }
 
       truthJet.setConstituentIndices(constituentIndices);
+      if (auto truthVertex = findJetTruthVertex(constituentIndices)) {
+        truthJet.setTruthVertex(*truthVertex);
+      }
       outputJetContainer.push_back(truthJet);
 
       jetLabelCounts[jetLabel] += 1;

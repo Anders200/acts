@@ -209,6 +209,11 @@ RootTrackSummaryWriter::RootTrackSummaryWriter(
     m_outputTree->Branch("jet_phi", &m_jet_phi);
     m_outputTree->Branch("jet_label", &m_jet_label);
     m_outputTree->Branch("ntracks_per_jets", &m_ntracks_per_jets);
+    m_outputTree->Branch("jet_nconstituents", &m_jet_nconstituents);
+    m_outputTree->Branch("jet_truth_vx", &m_jet_truth_vx);
+    m_outputTree->Branch("jet_truth_vy", &m_jet_truth_vy);
+    m_outputTree->Branch("jet_truth_vz", &m_jet_truth_vz);
+    m_outputTree->Branch("jet_truth_vt", &m_jet_truth_vt);
   }
 }
 
@@ -274,6 +279,14 @@ ProcessCode RootTrackSummaryWriter::writeT(const AlgorithmContext& ctx,
       m_jet_phi.push_back(phi(jet_4mom));
       m_jet_label.push_back(static_cast<int>(jets[ijet].jetLabel()));
       m_ntracks_per_jets.push_back(jets[ijet].associatedTracks().size());
+      m_jet_nconstituents.push_back(jets[ijet].constituentIndices().size());
+
+      const Acts::Vector4 truthVertex = jets[ijet].truthVertex().value_or(
+          Acts::Vector4::Constant(std::numeric_limits<double>::quiet_NaN()));
+      m_jet_truth_vx.push_back(truthVertex[Acts::ePos0]);
+      m_jet_truth_vy.push_back(truthVertex[Acts::ePos1]);
+      m_jet_truth_vz.push_back(truthVertex[Acts::ePos2]);
+      m_jet_truth_vt.push_back(truthVertex[Acts::eTime]);
     }
   }
 
@@ -714,6 +727,11 @@ ProcessCode RootTrackSummaryWriter::writeT(const AlgorithmContext& ctx,
     m_jet_phi.clear();
     m_jet_label.clear();
     m_ntracks_per_jets.clear();
+    m_jet_nconstituents.clear();
+    m_jet_truth_vx.clear();
+    m_jet_truth_vy.clear();
+    m_jet_truth_vz.clear();
+    m_jet_truth_vt.clear();
   }
 
   return ProcessCode::SUCCESS;

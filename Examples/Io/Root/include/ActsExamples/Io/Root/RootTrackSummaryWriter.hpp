@@ -297,6 +297,12 @@ class RootTrackSummaryWriter final : public WriterT<ConstTrackContainer> {
   std::vector<float> m_jet_phi;
   std::vector<int> m_jet_label;
   std::vector<std::size_t> m_ntracks_per_jets;
+  std::vector<std::size_t> m_jet_nconstituents;
+  /// The truth primary vertex of the jet (NaN if unknown)
+  std::vector<float> m_jet_truth_vx;
+  std::vector<float> m_jet_truth_vy;
+  std::vector<float> m_jet_truth_vz;
+  std::vector<float> m_jet_truth_vt;
 };
 
 }  // namespace ActsExamples

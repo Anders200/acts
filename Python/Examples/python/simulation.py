@@ -60,8 +60,11 @@ TruthJetConfig = namedtuple(
         "outputJets",
         "doTrackJetMatching",
         "jetPtMin",
+        "jetEtaRange",
+        "jetClusteringRadius",
+        "clusterHSParticlesOnly",
     ],
-    defaults=[None, None, None, False, None],
+    defaults=[None, None, None, False, None, None, None, None],
 )
 
 
@@ -101,6 +104,9 @@ def _getTruthJetKWargs(config: TruthJetConfig) -> dict:
         "outputJets": config.outputJets,
         "doTrackJetMatching": config.doTrackJetMatching,
         "jetPtMin": config.jetPtMin,
+        "jetEtaRange": config.jetEtaRange,
+        "jetClusteringRadius": config.jetClusteringRadius,
+        "clusterHSParticlesOnly": config.clusterHSParticlesOnly,
     }
 
 

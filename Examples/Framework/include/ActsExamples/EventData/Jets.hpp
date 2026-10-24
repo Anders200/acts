@@ -12,6 +12,7 @@
 #include "Acts/EventData/AnyTrackProxy.hpp"
 #include "ActsExamples/EventData/SimParticle.hpp"
 
+#include <optional>
 #include <vector>
 
 namespace ActsExamples {
@@ -103,6 +104,22 @@ class TruthJet : public Jet {
     m_constituentIndices = indices;
   }
 
+  /// @brief Get the indices of the constituents in the input particle collection
+  /// @return Vector of indices
+  const std::vector<int>& constituentIndices() const {
+    return m_constituentIndices;
+  }
+
+  /// @brief Set the truth primary vertex the jet originates from
+  /// @param vertex The 4-position of the truth primary vertex
+  void setTruthVertex(const Acts::Vector4& vertex) { m_truthVertex = vertex; }
+
+  /// @brief Get the truth primary vertex the jet originates from
+  /// @return The 4-position of the vertex, or nullopt if it is unknown
+  const std::optional<Acts::Vector4>& truthVertex() const {
+    return m_truthVertex;
+  }
+
   /// @brief Get the truth particles that are truth jet constituents
   /// @return Vector of barcodes for constituent particles
   const std::vector<SimBarcode>& constituents() const { return m_constituents; }
@@ -125,6 +142,8 @@ class TruthJet : public Jet {
   std::vector<SimBarcode> m_constituents;
   /// @brief Indices of the constituents in the input collection
   std::vector<int> m_constituentIndices;
+  /// @brief The truth primary vertex of the jet constituents
+  std::optional<Acts::Vector4> m_truthVertex;
   /// @brief The tracks associated to this truth jet
   std::vector<Acts::AnyConstTrackProxy> m_associatedTracks;
 };

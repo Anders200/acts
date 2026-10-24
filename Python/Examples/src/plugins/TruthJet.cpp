@@ -25,5 +25,8 @@ using namespace ActsPython;
 PYBIND11_MODULE(ActsExamplesPythonBindingsTruthJet, tjet) {
   ACTS_PYTHON_DECLARE_ALGORITHM(TruthJetAlgorithm, tjet, "TruthJetAlgorithm",
                                 inputTruthParticles, inputTracks, outputJets,
-                                doTrackJetMatching, jetPtMin);
+                                jetPtMin, jetEtaRange, jetClusteringRadius,
+                                clusterHSParticlesOnly, doJetLabeling,
+                                jetLabelingDeltaR, jetLabelingHadronPtMin,
+                                jetLabelingHSHadronsOnly, doTrackJetMatching);
 }  // namespace ActsPython
